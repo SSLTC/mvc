@@ -28,8 +28,16 @@ switch ($page) {
         // $articleController->index();
         (new ArticleController())->index();
         break;
-    case 'articles-show':
+    case 'show-previous-article':
+        (new ArticleController())->showPreviousArticle((int)$_GET['id']);
+        break;
+    case'show-next-article':
+        (new ArticleController())->showNextArticle((int)$_GET['id']);
+        break;
+    case 'show-article':
         // TODO: detail page
+        (new ArticleController())->showArticle((int)$_GET['id']);
+        break;
     case 'home':
     default:
         (new HomepageController())->index();

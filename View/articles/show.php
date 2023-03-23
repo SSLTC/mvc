@@ -8,8 +8,8 @@
     <p><?= $article->description ?></p>
 
     <?php // TODO: links to next and previous ?>
-    <a href="#">Previous article</a>
-    <a href="#">Next article</a>
+    <a href="?page=show-previous-article&id=<?= $article->id ?>">Previous article</a>
+    <a href="?page=show-next-article&id=<?= $article->id ?>">Next article</a>
 </section>
 
 <?php require 'View/includes/footer.php'?>
