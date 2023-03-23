@@ -14,12 +14,26 @@ class ArticleController
     }
 
     // Note: this function can also be used in a repository - the choice is yours
-    private function getArticles()
+    private function getArticles(): array
     {
+        global $config;
         // TODO: prepare the database connection
         // Note: you might want to use a re-usable databaseManager class - the choice is yours
+        $databaseManager = new DatabaseManager($config['host'], $config['user'], $config['password'], $config['dbname']);
+        $databaseManager->connect();
+
         // TODO: fetch all articles as $rawArticles (as a simple array)
         $rawArticles = [];
+
+        $query = 'SELECT * FROM articles';
+
+        $statementObj = $databaseManager->connection->prepare($query);
+        $statementObj->execute();
+
+        $statementObj->setFetchMode(PDO::FETCH_ASSOC);
+        $rawArticles = $statementObj->fetchAll();
+
+        $databaseManager->disconnect();
 
         $articles = [];
         foreach ($rawArticles as $rawArticle) {
