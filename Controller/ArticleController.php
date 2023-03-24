@@ -11,6 +11,8 @@ enum Navigate
 class ArticleController
 {
     private DatabaseManager $databaseManager;
+    private bool $disablePrevious;
+    private bool $disableNext;
 
     public function __construct()
     {
@@ -60,10 +62,10 @@ class ArticleController
     {
         switch ($navigate) {
             case Navigate::Next:
-                $query = 'SELECT COUNT(ID) AS disable, MIN(ID) AS ID FROM articles WHERE ID>:id;';
+                $query = 'SELECT MIN(ID) AS ID FROM articles WHERE ID>:id;';
                 break;
             case Navigate::Previous:
-                $query = 'SELECT COUNT(ID) AS disable, MAX(ID) AS ID FROM articles WHERE ID<:id;';
+                $query = 'SELECT MAX(ID) AS ID FROM articles WHERE ID<:id;';
         }
 
         $statementObj = $this->databaseManager->connection->prepare($query);
@@ -79,24 +81,28 @@ class ArticleController
         }
     }
 
-    public function showArticle(int $id, bool $disablePrevious = false, bool $disableNext = false)
+    public function showArticle(int $id)
     {
-        $disablePrevious;
-        $disableNext;
         $article = $this->getArticle($id);
+        $disablePrevious = $this->disablePrevious;
+        $disableNext = $this->disableNext;
         require 'View/articles/show.php';
     }
 
     private function getArticle(int $id): Article
     {
         // TODO: this can be used for a detail page
-        $query = 'SELECT * FROM articles WHERE ID=:id;';
+        $query = 'SELECT * FROM (SELECT * FROM articles WHERE ID=:id) R1 JOIN 
+        (SELECT COUNT(ID) AS hasPrev FROM articles WHERE ID<:id) R2 JOIN 
+        (SELECT COUNT(ID) AS hasNext FROM articles WHERE ID>:id) R3;';
 
         $statementObj = $this->databaseManager->connection->prepare($query);
         $statementObj->bindValue(':id', $id, PDO::PARAM_INT);
         $statementObj->execute();
         $statementObj->setFetchMode(PDO::FETCH_ASSOC);
         $rawArticle = $statementObj->fetch();
+        $this->disablePrevious = $rawArticle['hasPrev'] === 0? true : false;
+        $this->disableNext = $rawArticle['hasNext'] === 0? true : false;
         return new Article((int)$rawArticle['ID'], $rawArticle['title'], $rawArticle['description'], $rawArticle['publish_date']);
     }
 }
