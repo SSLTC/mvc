@@ -3,9 +3,9 @@
 <?php // Use any data loaded in the controller here ?>
 
 <section>
-    <p><a href="index.php?page=articles-index">To articles page</a></p>
+    <h1>Trends</h1>
 
-    <p>Put your content here.</p>
+    <p>Keep in touch of the latest trends about web development.</p>
 </section>
 
 <?php require 'View/includes/footer.php'?>

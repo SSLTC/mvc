@@ -8,8 +8,16 @@
     <p><?= $article->description ?></p>
 
     <?php // TODO: links to next and previous ?>
-    <a href="?page=show-previous-article&id=<?= $article->id ?>">Previous article</a>
-    <a href="?page=show-next-article&id=<?= $article->id ?>">Next article</a>
+    <nav aria-label="...">
+        <ul class="pagination">
+            <li class="page-item <?= $disablePrevious ? 'disabled' : '' ?>">
+                <a class="page-link" href="?page=show-previous-article&id=<?= $article->id ?>">Previous</a>
+            </li>
+            <li class="page-item <?= $disableNext ? 'disabled' : '' ?>">
+                <a class="page-link" href="?page=show-next-article&id=<?= $article->id ?>">Next</a>
+            </li>
+        </ul>
+    </nav>
 </section>
 
 <?php require 'View/includes/footer.php'?>

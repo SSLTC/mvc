@@ -29,10 +29,10 @@ switch ($page) {
         (new ArticleController())->index();
         break;
     case 'show-previous-article':
-        (new ArticleController())->showPreviousArticle((int)$_GET['id']);
+        (new ArticleController())->showNextPreviousArticle((int)$_GET['id'], Navigate::Previous);
         break;
     case'show-next-article':
-        (new ArticleController())->showNextArticle((int)$_GET['id']);
+        (new ArticleController())->showNextPreviousArticle((int)$_GET['id'], Navigate::Next);
         break;
     case 'show-article':
         // TODO: detail page

@@ -2,6 +2,12 @@
 
 declare(strict_types = 1);
 
+enum Navigate 
+{
+    case Previous;
+    case Next;
+}
+
 class ArticleController
 {
     private DatabaseManager $databaseManager;
@@ -50,41 +56,33 @@ class ArticleController
         return $articles;
     }
 
-    public function showPreviousArticle(int $id)
+    public function showNextPreviousArticle(int $currentId, Navigate $navigate)
     {
-        $query = 'SELECT MAX(ID) AS ID FROM articles WHERE ID<:id;';
+        switch ($navigate) {
+            case Navigate::Next:
+                $query = 'SELECT COUNT(ID) AS disable, MIN(ID) AS ID FROM articles WHERE ID>:id;';
+                break;
+            case Navigate::Previous:
+                $query = 'SELECT COUNT(ID) AS disable, MAX(ID) AS ID FROM articles WHERE ID<:id;';
+        }
 
         $statementObj = $this->databaseManager->connection->prepare($query);
-        $statementObj->bindValue(':id', $id, PDO::PARAM_INT);
+        $statementObj->bindValue(':id', $currentId, PDO::PARAM_INT);
         $statementObj->execute();
         $statementObj->setFetchMode(PDO::FETCH_ASSOC);
         $result = $statementObj->fetch();
 
         if ($result['ID'] === NULL) {
-            $this->showArticle($id);
+            $this->showArticle($currentId);
         } else {
             $this->showArticle((int)$result['ID']);
         }
     }
 
-    public function showNextArticle(int $id)
+    public function showArticle(int $id, bool $disablePrevious = false, bool $disableNext = false)
     {
-        $query = 'SELECT MIN(ID) AS ID FROM articles WHERE ID>:id;';
-        $statementObj = $this->databaseManager->connection->prepare($query);
-        $statementObj->bindValue(':id', $id, PDO::PARAM_INT);
-        $statementObj->execute();
-        $statementObj->setFetchMode(PDO::FETCH_ASSOC);
-        $result = $statementObj->fetch();
-        
-        if ($result['ID'] === NULL) {
-            $this->showArticle($id);
-        } else {
-            $this->showArticle((int)$result['ID']);
-        }
-    }
-
-    public function showArticle(int $id)
-    {
+        $disablePrevious;
+        $disableNext;
         $article = $this->getArticle($id);
         require 'View/articles/show.php';
     }
