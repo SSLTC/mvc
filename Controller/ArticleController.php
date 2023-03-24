@@ -5,6 +5,7 @@ declare(strict_types = 1);
 enum Navigate 
 {
     case Previous;
+    case GivenID;
     case Next;
 }
 
@@ -58,43 +59,33 @@ class ArticleController
         return $articles;
     }
 
-    public function showNextPreviousArticle(int $currentId, Navigate $navigate)
+    public function showArticle(int $id, Navigate $navigate)
     {
-        switch ($navigate) {
-            case Navigate::Next:
-                $query = 'SELECT MIN(ID) AS ID FROM articles WHERE ID>:id;';
-                break;
-            case Navigate::Previous:
-                $query = 'SELECT MAX(ID) AS ID FROM articles WHERE ID<:id;';
-        }
-
-        $statementObj = $this->databaseManager->connection->prepare($query);
-        $statementObj->bindValue(':id', $currentId, PDO::PARAM_INT);
-        $statementObj->execute();
-        $statementObj->setFetchMode(PDO::FETCH_ASSOC);
-        $result = $statementObj->fetch();
-
-        if ($result['ID'] === NULL) {
-            $this->showArticle($currentId);
-        } else {
-            $this->showArticle((int)$result['ID']);
-        }
-    }
-
-    public function showArticle(int $id)
-    {
-        $article = $this->getArticle($id);
+        $article = $this->getArticle($id, $navigate);
         $disablePrevious = $this->disablePrevious;
         $disableNext = $this->disableNext;
         require 'View/articles/show.php';
     }
 
-    private function getArticle(int $id): Article
+    private function getArticle(int $id, Navigate $navigate): Article
     {
         // TODO: this can be used for a detail page
-        $query = 'SELECT * FROM (SELECT * FROM articles WHERE ID=:id) R1 JOIN 
-        (SELECT COUNT(ID) AS hasPrev FROM articles WHERE ID<:id) R2 JOIN 
-        (SELECT COUNT(ID) AS hasNext FROM articles WHERE ID>:id) R3;';
+        switch ($navigate) {
+            case Navigate::Next:
+                $query = 'SELECT * FROM (SELECT * FROM articles WHERE ID=(SELECT MIN(ID) FROM articles art WHERE ID>:id)) R1 JOIN 
+                (SELECT COUNT(ID) AS hasPrev FROM articles WHERE ID<(SELECT MIN(ID) FROM articles art WHERE ID>:id)) R2 JOIN 
+                (SELECT COUNT(ID) AS hasNext FROM articles WHERE ID>(SELECT MIN(ID) FROM articles art WHERE ID>:id)) R3;';
+                break;
+            case Navigate::Previous:
+                $query = 'SELECT * FROM (SELECT * FROM articles WHERE ID=(SELECT MAX(ID) FROM articles art WHERE ID<:id)) R1 JOIN 
+                (SELECT COUNT(ID) AS hasPrev FROM articles WHERE ID<(SELECT MAX(ID) FROM articles art WHERE ID<:id)) R2 JOIN 
+                (SELECT COUNT(ID) AS hasNext FROM articles WHERE ID>(SELECT MAX(ID) FROM articles art WHERE ID<:id)) R3;';
+                break;
+            default:
+                $query = 'SELECT * FROM (SELECT * FROM articles WHERE ID=:id) R1 JOIN 
+                (SELECT COUNT(ID) AS hasPrev FROM articles WHERE ID<:id) R2 JOIN 
+                (SELECT COUNT(ID) AS hasNext FROM articles WHERE ID>:id) R3;';
+        }
 
         $statementObj = $this->databaseManager->connection->prepare($query);
         $statementObj->bindValue(':id', $id, PDO::PARAM_INT);

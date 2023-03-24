@@ -29,14 +29,14 @@ switch ($page) {
         (new ArticleController())->index();
         break;
     case 'show-previous-article':
-        (new ArticleController())->showNextPreviousArticle((int)$_GET['id'], Navigate::Previous);
+        (new ArticleController())->showArticle((int)$_GET['id'], Navigate::Previous);
         break;
     case'show-next-article':
-        (new ArticleController())->showNextPreviousArticle((int)$_GET['id'], Navigate::Next);
+        (new ArticleController())->showArticle((int)$_GET['id'], Navigate::Next);
         break;
     case 'show-article':
         // TODO: detail page
-        (new ArticleController())->showArticle((int)$_GET['id']);
+        (new ArticleController())->showArticle((int)$_GET['id'], Navigate::GivenID);
         break;
     case 'home':
     default:
