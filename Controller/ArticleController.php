@@ -40,7 +40,8 @@ class ArticleController
         // TODO: fetch all articles as $rawArticles (as a simple array)
         $rawArticles = [];
 
-        $query = 'SELECT * FROM articles';
+        $query = 'SELECT art.ID, art.title, art.description, art.publish_date, authors.name AS authorName 
+        FROM articles art INNER JOIN authors ON art.author_ID=authors.ID';
 
         $statementObj = $this->databaseManager->connection->prepare($query);
         $statementObj->execute();
@@ -53,7 +54,8 @@ class ArticleController
         $articles = [];
         foreach ($rawArticles as $rawArticle) {
             // We are converting an article from a "dumb" array to a much more flexible class
-            $articles[] = new Article((int)$rawArticle['ID'], $rawArticle['title'], $rawArticle['description'], $rawArticle['publish_date']);
+            $articles[] = new Article((int)$rawArticle['ID'], $rawArticle['title'], 
+            $rawArticle['authorName'],$rawArticle['description'], $rawArticle['publish_date']);
         }
 
         return $articles;
@@ -72,17 +74,24 @@ class ArticleController
         // TODO: this can be used for a detail page
         switch ($navigate) {
             case Navigate::Next:
-                $query = 'SELECT * FROM (SELECT * FROM articles WHERE ID=(SELECT MIN(ID) FROM articles art WHERE ID>:id)) R1 JOIN 
+                $query = 'SELECT * FROM (SELECT art.ID, art.title, art.description, art.publish_date, authors.name AS authorName 
+                FROM articles art INNER JOIN authors ON art.author_ID=authors.ID 
+                WHERE art.ID=(SELECT MIN(ID) FROM articles art WHERE ID>:id)) R1 JOIN 
                 (SELECT COUNT(ID) AS hasPrev FROM articles WHERE ID<(SELECT MIN(ID) FROM articles art WHERE ID>:id)) R2 JOIN 
                 (SELECT COUNT(ID) AS hasNext FROM articles WHERE ID>(SELECT MIN(ID) FROM articles art WHERE ID>:id)) R3;';
                 break;
             case Navigate::Previous:
-                $query = 'SELECT * FROM (SELECT * FROM articles WHERE ID=(SELECT MAX(ID) FROM articles art WHERE ID<:id)) R1 JOIN 
+                $query = 'SELECT * FROM (SELECT art.ID, art.title, art.description, art.publish_date, authors.name AS authorName 
+                FROM articles art INNER JOIN authors ON art.author_ID=authors.ID 
+                WHERE art.ID=(SELECT MAX(ID) FROM articles art WHERE ID<:id)) R1 JOIN 
                 (SELECT COUNT(ID) AS hasPrev FROM articles WHERE ID<(SELECT MAX(ID) FROM articles art WHERE ID<:id)) R2 JOIN 
                 (SELECT COUNT(ID) AS hasNext FROM articles WHERE ID>(SELECT MAX(ID) FROM articles art WHERE ID<:id)) R3;';
                 break;
             default:
-                $query = 'SELECT * FROM (SELECT * FROM articles WHERE ID=:id) R1 JOIN 
+                $query = 'SELECT * FROM (
+                SELECT art.ID, art.title, art.description, art.publish_date, authors.name AS authorName 
+                FROM articles art INNER JOIN authors ON art.author_ID=authors.ID 
+                WHERE art.ID=:id) R1 JOIN 
                 (SELECT COUNT(ID) AS hasPrev FROM articles WHERE ID<:id) R2 JOIN 
                 (SELECT COUNT(ID) AS hasNext FROM articles WHERE ID>:id) R3;';
         }
@@ -94,6 +103,11 @@ class ArticleController
         $rawArticle = $statementObj->fetch();
         $this->disablePrevious = $rawArticle['hasPrev'] === 0? true : false;
         $this->disableNext = $rawArticle['hasNext'] === 0? true : false;
-        return new Article((int)$rawArticle['ID'], $rawArticle['title'], $rawArticle['description'], $rawArticle['publish_date']);
+        return new Article((int)$rawArticle['ID'], 
+                                $rawArticle['title'], 
+                                $rawArticle['authorName'], 
+                                $rawArticle['description'], 
+                                $rawArticle['publish_date'],
+                            );
     }
 }

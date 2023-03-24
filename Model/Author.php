@@ -9,6 +9,11 @@ class Author
         return $this->name;
     }
 
+    protected function setName(string $name): void
+    {
+        $this->name = $name;
+    }
+
     public function __construct(string $name)
     {
         $this->name = $name;
